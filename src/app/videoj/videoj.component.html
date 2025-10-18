@@ -1,8 +1,51 @@
+<!-- Pantalla de Presentación -->
+@if (mostrarPresentacion) {
+  <div class="presentacion-overlay" (click)="cerrarPresentacion()">
+    <div class="presentacion-content">
+      <div class="xbox-logo">
+        <div class="xbox-circle">
+          <div class="xbox-x">X</div>
+        </div>
+      </div>
+      <h1 class="titulo-presentacion">VIDEOJUEGOS CLÁSICOS</h1>
+      <h2 class="subtitulo-presentacion">XBOX 360</h2>
+      <p class="descripcion-presentacion">La era dorada del gaming</p>
+      <div class="loading-bar">
+        <div class="loading-progress"></div>
+      </div>
+      <p class="click-continuar">Haz click para continuar</p>
+    </div>
+  </div>
+}
+
 <div class="contenedor-principal">
   <header class="header">
-    <h1>🎮 Videojuegos Clásicos Xbox 360</h1>
-    <p class="subtitulo">Gestiona tu colección de juegos legendarios</p>
+    <div class="header-content">
+      <div class="logo-container">
+        <div class="xbox-mini">X</div>
+        <div class="header-text">
+          <h1>🎮 Videojuegos Clásicos Xbox 360</h1>
+          <p class="subtitulo">Gestiona tu colección de juegos legendarios</p>
+        </div>
+      </div>
+    </div>
   </header>
+
+  <!-- Mensaje de error -->
+  @if (error) {
+    <div class="alert-error">
+      <span>⚠️ {{ error }}</span>
+      <button (click)="error = ''" class="btn-close">✕</button>
+    </div>
+  }
+
+  <!-- Loading spinner -->
+  @if (isLoading) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Cargando...</p>
+    </div>
+  }
 
   <!-- Barra de acciones -->
   <div class="barra-acciones">
@@ -11,7 +54,7 @@
     </button>
 
     <div class="filtros">
-      <select [(ngModel)]="filtroGenero" class="select-filtro">
+      <select [(ngModel)]="filtroGenero" (change)="onFiltroChange()" class="select-filtro">
         <option value="">Todos los géneros</option>
         @for (genero of generos; track genero) {
           @if (genero !== 'Todos') {
@@ -20,7 +63,7 @@
         }
       </select>
 
-      <select [(ngModel)]="ordenarPor" class="select-filtro">
+      <select [(ngModel)]="ordenarPor" (change)="onFiltroChange()" class="select-filtro">
         <option value="nombre">Ordenar por Nombre</option>
         <option value="anio">Ordenar por Año</option>
         <option value="calificacion">Ordenar por Calificación</option>
@@ -87,6 +130,22 @@
         </div>
 
         <div class="form-group">
+          <label for="imagen_url">URL de la Imagen</label>
+          <input 
+            id="imagen_url"
+            type="text" 
+            [(ngModel)]="nuevoJuego.imagen_url" 
+            name="imagen_url"
+            placeholder="https://ejemplo.com/imagen.jpg"
+          />
+          @if (nuevoJuego.imagen_url) {
+            <div class="image-preview">
+              <img [src]="nuevoJuego.imagen_url" (error)="onImageError($event)" alt="Preview">
+            </div>
+          }
+        </div>
+
+        <div class="form-group">
           <label for="calificacion">Calificación (0-10) *</label>
           <input 
             id="calificacion"
@@ -129,16 +188,26 @@
       <div class="grid-juegos">
         @for (juego of videojuegosFiltrados; track juego.id) {
           <div class="card-juego">
+            <div class="card-image">
+              <img 
+                [src]="juego.imagen_url || 'https://via.placeholder.com/300x400/1a1a1a/FFFFFF?text=' + juego.nombre" 
+                [alt]="juego.nombre"
+                (error)="onImageError($event)"
+              />
+              <div class="card-overlay">
+                <span class="badge-genre">{{ juego.genero }}</span>
+              </div>
+            </div>
+            
             <div class="card-header">
               <h4>{{ juego.nombre }}</h4>
-              <span class="badge">{{ juego.genero }}</span>
+              <span class="badge-year">{{ juego.anio }}</span>
             </div>
             
             <div class="card-body">
-              <p><strong>Desarrollador:</strong> {{ juego.desarrollador }}</p>
-              <p><strong>Año:</strong> {{ juego.anio }}</p>
+              <p><strong>🏢 Desarrollador:</strong> {{ juego.desarrollador }}</p>
               <div class="calificacion">
-                <strong>Calificación:</strong>
+                <strong>⭐ Calificación:</strong>
                 <span class="estrellas">{{ getEstrellas(juego.calificacion) }}</span>
                 <span class="numero-calificacion">{{ juego.calificacion }}/10</span>
               </div>
@@ -162,4 +231,26 @@
       </div>
     }
   </div>
+
+  <!-- Footer con derechos de autor -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Xbox 360 CRUD Manager</h4>
+        <p>Sistema de gestión de videojuegos clásicos</p>
+      </div>
+      <div class="footer-section">
+        <h4>Desarrollado por</h4>
+        <p>Mateo Bolivar</p>
+      </div>
+      <div class="footer-section">
+        <h4>Tecnologías</h4>
+        <p>Angular + Node.js + MySQL</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Mateo Bolivar. Todos los derechos reservados.</p>
+      <p class="footer-note">Las imágenes y nombres de videojuegos son propiedad de sus respectivos dueños.</p>
+    </div>
+  </footer>
 </div>

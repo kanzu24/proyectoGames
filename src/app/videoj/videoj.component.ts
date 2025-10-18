@@ -1,40 +1,32 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-
-interface Videojuego {
-  id: number;
-  nombre: string;
-  genero: string;
-  anio: number;
-  desarrollador: string;
-  calificacion: number;
-}
+import { HttpClientModule } from '@angular/common/http';
+import { VideojuegosService } from '../services/videojuego.service';
+import { Videojuego } from '../models/videojuego.model';
 
 @Component({
   selector: 'app-videoj',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, HttpClientModule],
+  providers: [VideojuegosService],
   templateUrl: './videoj.component.html',
   styleUrl: './videoj.component.css'
 })
-export class VideojComponent {
+export class VideojComponent implements OnInit {
   
-  videojuegos: Videojuego[] = [
-    { id: 1, nombre: 'Halo 3', genero: 'FPS', anio: 2007, desarrollador: 'Bungie', calificacion: 9.5 },
-    { id: 2, nombre: 'Gears of War', genero: 'Acción', anio: 2006, desarrollador: 'Epic Games', calificacion: 9.0 },
-    { id: 3, nombre: 'Red Dead Redemption', genero: 'Aventura', anio: 2010, desarrollador: 'Rockstar', calificacion: 9.8 },
-    { id: 4, nombre: 'Call of Duty 4', genero: 'FPS', anio: 2007, desarrollador: 'Infinity Ward', calificacion: 9.2 },
-    { id: 5, nombre: 'The Elder Scrolls V: Skyrim', genero: 'RPG', anio: 2011, desarrollador: 'Bethesda', calificacion: 9.6 }
-  ];
+  videojuegos: Videojuego[] = [];
+  videojuegosFiltrados: Videojuego[] = [];
+  isLoading: boolean = false;
+  error: string = '';
 
   nuevoJuego: Videojuego = {
-    id: 0,
     nombre: '',
     genero: '',
     anio: new Date().getFullYear(),
     desarrollador: '',
-    calificacion: 5
+    calificacion: 5,
+    imagen_url: ''
   };
 
   juegoEditando: Videojuego | null = null;
@@ -42,11 +34,41 @@ export class VideojComponent {
   modoEdicion: boolean = false;
   filtroGenero: string = '';
   ordenarPor: string = 'nombre';
+  mostrarPresentacion: boolean = true;
 
   generos: string[] = ['Todos', 'FPS', 'Acción', 'Aventura', 'RPG', 'Deportes', 'Carreras', 'Plataformas'];
 
-  get videojuegosFiltrados(): Videojuego[] {
-    let juegos = this.videojuegos;
+  constructor(private videojuegosService: VideojuegosService) {}
+
+  ngOnInit(): void {
+    this.cargarVideojuegos();
+    
+    // Ocultar presentación después de 5 segundos
+    setTimeout(() => {
+      this.mostrarPresentacion = false;
+    }, 5000);
+  }
+
+  cargarVideojuegos(): void {
+    this.isLoading = true;
+    this.error = '';
+    
+    this.videojuegosService.getVideojuegos().subscribe({
+      next: (data) => {
+        this.videojuegos = data;
+        this.aplicarFiltros();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar videojuegos:', err);
+        this.error = 'Error al cargar los videojuegos. Verifica que el servidor esté corriendo.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  aplicarFiltros(): void {
+    let juegos = [...this.videojuegos];
 
     // Filtrar por género
     if (this.filtroGenero && this.filtroGenero !== 'Todos') {
@@ -54,7 +76,7 @@ export class VideojComponent {
     }
 
     // Ordenar
-    return juegos.sort((a, b) => {
+    juegos.sort((a, b) => {
       switch(this.ordenarPor) {
         case 'nombre':
           return a.nombre.localeCompare(b.nombre);
@@ -66,6 +88,12 @@ export class VideojComponent {
           return 0;
       }
     });
+
+    this.videojuegosFiltrados = juegos;
+  }
+
+  onFiltroChange(): void {
+    this.aplicarFiltros();
   }
 
   toggleFormulario(): void {
@@ -77,18 +105,21 @@ export class VideojComponent {
 
   addJuego(): void {
     if (this.validarFormulario()) {
-      const nuevoId = this.videojuegos.length > 0 
-        ? Math.max(...this.videojuegos.map(j => j.id)) + 1 
-        : 1;
+      this.isLoading = true;
       
-      const juego: Videojuego = {
-        ...this.nuevoJuego,
-        id: nuevoId
-      };
-
-      this.videojuegos.push(juego);
-      this.resetFormulario();
-      this.mostrarFormulario = false;
+      this.videojuegosService.createVideojuego(this.nuevoJuego).subscribe({
+        next: (data) => {
+          this.cargarVideojuegos();
+          this.resetFormulario();
+          this.mostrarFormulario = false;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error al crear videojuego:', err);
+          this.error = 'Error al crear el videojuego';
+          this.isLoading = false;
+        }
+      });
     }
   }
 
@@ -100,18 +131,41 @@ export class VideojComponent {
   }
 
   actualizarJuego(): void {
-    if (this.juegoEditando && this.validarFormulario()) {
-      const index = this.videojuegos.findIndex(j => j.id === this.juegoEditando!.id);
-      if (index !== -1) {
-        this.videojuegos[index] = { ...this.nuevoJuego, id: this.juegoEditando.id };
-      }
-      this.cancelar();
+    if (this.juegoEditando && this.juegoEditando.id && this.validarFormulario()) {
+      this.isLoading = true;
+      
+      this.videojuegosService.updateVideojuego(this.juegoEditando.id, this.nuevoJuego).subscribe({
+        next: (data) => {
+          this.cargarVideojuegos();
+          this.cancelar();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error al actualizar videojuego:', err);
+          this.error = 'Error al actualizar el videojuego';
+          this.isLoading = false;
+        }
+      });
     }
   }
 
-  eliminarJuego(id: number): void {
+  eliminarJuego(id: number | undefined): void {
+    if (!id) return;
+    
     if (confirm('¿Estás seguro de que deseas eliminar este videojuego?')) {
-      this.videojuegos = this.videojuegos.filter(j => j.id !== id);
+      this.isLoading = true;
+      
+      this.videojuegosService.deleteVideojuego(id).subscribe({
+        next: () => {
+          this.cargarVideojuegos();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error al eliminar videojuego:', err);
+          this.error = 'Error al eliminar el videojuego';
+          this.isLoading = false;
+        }
+      });
     }
   }
 
@@ -124,12 +178,12 @@ export class VideojComponent {
 
   resetFormulario(): void {
     this.nuevoJuego = {
-      id: 0,
       nombre: '',
       genero: '',
       anio: new Date().getFullYear(),
       desarrollador: '',
-      calificacion: 5
+      calificacion: 5,
+      imagen_url: ''
     };
   }
 
@@ -146,5 +200,13 @@ export class VideojComponent {
   getEstrellas(calificacion: number): string {
     const estrellas = Math.round(calificacion);
     return '★'.repeat(estrellas) + '☆'.repeat(10 - estrellas);
+  }
+
+  onImageError(event: any): void {
+    event.target.src = 'https://via.placeholder.com/300x400/333333/FFFFFF?text=Sin+Imagen';
+  }
+
+  cerrarPresentacion(): void {
+    this.mostrarPresentacion = false;
   }
 }
