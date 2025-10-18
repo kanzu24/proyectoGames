@@ -1,16 +1,165 @@
-<div class="videojuegos">
-    <h2>Lista de videojuegos</h2>
+<div class="contenedor-principal">
+  <header class="header">
+    <h1>🎮 Videojuegos Clásicos Xbox 360</h1>
+    <p class="subtitulo">Gestiona tu colección de juegos legendarios</p>
+  </header>
 
-    <ul>
-      @for (juego of videojuegos; track juego) {
-        <li>{{juego}}</li>
-      } @empty {
-        <li>No hay videojuegos para mostrar</li>
-      }
-    </ul>
+  <!-- Barra de acciones -->
+  <div class="barra-acciones">
+    <button class="btn btn-primary" (click)="toggleFormulario()">
+      {{ mostrarFormulario ? '❌ Cerrar' : '➕ Agregar Videojuego' }}
+    </button>
 
-    <h4>{{nuevoJuego}}</h4>
+    <div class="filtros">
+      <select [(ngModel)]="filtroGenero" class="select-filtro">
+        <option value="">Todos los géneros</option>
+        @for (genero of generos; track genero) {
+          @if (genero !== 'Todos') {
+            <option [value]="genero">{{genero}}</option>
+          }
+        }
+      </select>
 
-    <input [(ngModel)]="nuevoJuego" type="text" placeholder="Agrega un nuevo videojuego"/>
-    <button (click)="addJuego()">Añadir</button>
+      <select [(ngModel)]="ordenarPor" class="select-filtro">
+        <option value="nombre">Ordenar por Nombre</option>
+        <option value="anio">Ordenar por Año</option>
+        <option value="calificacion">Ordenar por Calificación</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Formulario de agregar/editar -->
+  @if (mostrarFormulario) {
+    <div class="formulario-container">
+      <h3>{{ modoEdicion ? '✏️ Editar Videojuego' : '➕ Nuevo Videojuego' }}</h3>
+      
+      <form class="formulario">
+        <div class="form-group">
+          <label for="nombre">Nombre del Juego *</label>
+          <input 
+            id="nombre"
+            type="text" 
+            [(ngModel)]="nuevoJuego.nombre" 
+            name="nombre"
+            placeholder="Ej: Halo 3"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="genero">Género *</label>
+            <select id="genero" [(ngModel)]="nuevoJuego.genero" name="genero" required>
+              <option value="">Selecciona un género</option>
+              @for (genero of generos; track genero) {
+                @if (genero !== 'Todos') {
+                  <option [value]="genero">{{genero}}</option>
+                }
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="anio">Año *</label>
+            <input 
+              id="anio"
+              type="number" 
+              [(ngModel)]="nuevoJuego.anio" 
+              name="anio"
+              min="2005" 
+              max="2013"
+              placeholder="2007"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="desarrollador">Desarrollador *</label>
+          <input 
+            id="desarrollador"
+            type="text" 
+            [(ngModel)]="nuevoJuego.desarrollador" 
+            name="desarrollador"
+            placeholder="Ej: Bungie"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="calificacion">Calificación (0-10) *</label>
+          <input 
+            id="calificacion"
+            type="number" 
+            [(ngModel)]="nuevoJuego.calificacion" 
+            name="calificacion"
+            min="0" 
+            max="10" 
+            step="0.1"
+            required
+          />
+          <div class="estrellas-preview">
+            {{ getEstrellas(nuevoJuego.calificacion) }}
+          </div>
+        </div>
+
+        <div class="form-actions">
+          @if (modoEdicion) {
+            <button type="button" class="btn btn-success" (click)="actualizarJuego()">
+              💾 Actualizar
+            </button>
+          } @else {
+            <button type="button" class="btn btn-success" (click)="addJuego()">
+              ➕ Agregar
+            </button>
+          }
+          <button type="button" class="btn btn-secondary" (click)="cancelar()">
+            ❌ Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Lista de videojuegos -->
+  <div class="lista-container">
+    <h3>📋 Colección ({{ videojuegosFiltrados.length }} juegos)</h3>
+    
+    @if (videojuegosFiltrados.length > 0) {
+      <div class="grid-juegos">
+        @for (juego of videojuegosFiltrados; track juego.id) {
+          <div class="card-juego">
+            <div class="card-header">
+              <h4>{{ juego.nombre }}</h4>
+              <span class="badge">{{ juego.genero }}</span>
+            </div>
+            
+            <div class="card-body">
+              <p><strong>Desarrollador:</strong> {{ juego.desarrollador }}</p>
+              <p><strong>Año:</strong> {{ juego.anio }}</p>
+              <div class="calificacion">
+                <strong>Calificación:</strong>
+                <span class="estrellas">{{ getEstrellas(juego.calificacion) }}</span>
+                <span class="numero-calificacion">{{ juego.calificacion }}/10</span>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button class="btn btn-edit" (click)="editarJuego(juego)">
+                ✏️ Editar
+              </button>
+              <button class="btn btn-delete" (click)="eliminarJuego(juego.id)">
+                🗑️ Eliminar
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <p>🎮 No hay videojuegos para mostrar</p>
+        <p class="empty-subtitle">Agrega tu primer juego clásico de Xbox 360</p>
+      </div>
+    }
+  </div>
 </div>
