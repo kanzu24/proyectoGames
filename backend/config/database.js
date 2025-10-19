@@ -1,5 +1,7 @@
 
-require('dotenv').config();
+require('dotenv').config({ 
+  path: process.env.NODE_ENV === 'production' ? '.env' : '.env.local' 
+});
 
 // Configuración de la base de datos
 const dbConfig = {

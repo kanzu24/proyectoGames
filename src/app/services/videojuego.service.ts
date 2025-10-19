@@ -7,7 +7,7 @@ import { Videojuego } from '../models/videojuego.model';
   providedIn: 'root'
 })
 export class VideojuegosService {
-  private apiUrl = 'http://localhost:3000/api/videojuegos';
+  private apiUrl = '/api/videojuegos'; // Sin http://localhost:3000
 
   constructor(private http: HttpClient) { }
 

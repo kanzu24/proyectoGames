@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Base de datos MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: videojuegos_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: videojuegos_xbox360
+      MYSQL_USER: videojuegos_user
+      MYSQL_PASSWORD: videojuegos_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - videojuegos_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend Node.js
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: videojuegos_backend
+    restart: always
+    environment:
+      DB_HOST: mysql
+      DB_USER: videojuegos_user
+      DB_PASSWORD: videojuegos_pass
+      DB_NAME: videojuegos_xbox360
+      PORT: 3000
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - videojuegos_network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  # Frontend Angular
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: videojuegos_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - videojuegos_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  videojuegos_network:
+    driver: bridge
