@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
@@ -6,7 +7,7 @@ import { VideojuegosService } from '../services/videojuego.service';
 import { Videojuego } from '../models/videojuego.model';
 
 @Component({
-  selector: 'app-videoj',
+  selector: 'app-root',
   standalone: true,
   imports: [FormsModule, CommonModule, HttpClientModule],
   providers: [VideojuegosService],
