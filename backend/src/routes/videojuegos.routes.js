@@ -1,22 +1,20 @@
 const express = require('express');
 const router = express.Router();
+const verifyToken = require('../middleware/auth');
 
-const { verifyToken, verifyAdmin } = require('../middleware/auth');
 const {
+  listarVideojuegos,
   agregarVideojuego,
   editarVideojuego,
-  eliminarVideojuego,
-  listarVideojuegos
+  eliminarVideojuego
 } = require('../controllers/videojuegos.controller');
 
-// ✅ Todos los logueados pueden agregar
-router.post('/agregar', verifyToken, agregarVideojuego);
-
-// ✅ Solo ADMIN puede editar o eliminar
-router.put('/editar/:id', verifyToken, verifyAdmin, editarVideojuego);
-router.delete('/eliminar/:id', verifyToken, verifyAdmin, eliminarVideojuego);
-
-// ✅ Pública
+// 🔓 Ruta pública
 router.get('/listar', listarVideojuegos);
+
+// 🔒 Rutas protegidas
+router.post('/agregar', verifyToken, agregarVideojuego);
+router.put('/editar/:id', verifyToken, editarVideojuego);
+router.delete('/eliminar/:id', verifyToken, eliminarVideojuego);
 
 module.exports = router;

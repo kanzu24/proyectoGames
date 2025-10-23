@@ -51,10 +51,10 @@ module.exports = (pool) => {
         return res.status(401).json({ error: 'Credenciales incorrectas' });
       }
 
-      // 🔥 Incluimos el rol dentro del token
+      // Incluimos el rol dentro del token
       const token = jwt.sign(
-        { id: user.id, email: user.email, rol: user.rol }, // <-- asegúrate de usar el nombre correcto del campo
-        process.env.JWT_SECRET || 'mi_super_secreto',
+        { id: user.id, email: user.email, rol: user.role }, //  incluye rol
+        process.env.JWT_SECRET,
         { expiresIn: '2h' }
       );
 

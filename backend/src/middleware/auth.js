@@ -13,16 +13,9 @@ function verifyToken(req, res, next) {
       return res.status(401).json({ message: 'Token inválido' });
     }
 
-    req.user = decoded; // Guardamos los datos del usuario logueado
+    req.user = decoded; // Datos del usuario
     next();
   });
 }
 
-function verifyAdmin(req, res, next) {
-  if (req.user.rol !== 'admin') {
-    return res.status(403).json({ message: 'Acceso denegado: No eres administrador' });
-  }
-  next();
-}
-
-module.exports = { verifyToken, verifyAdmin };
+module.exports = verifyToken;

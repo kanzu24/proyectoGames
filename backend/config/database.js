@@ -1,7 +1,5 @@
-
-require('dotenv').config({ 
-  path: process.env.NODE_ENV === 'production' ? '.env' : '.env.local' 
-});
+const mysql = require('mysql2/promise');
+require('dotenv').config({ path: process.env.NODE_ENV === 'production' ? '.env' : '.env.local' });
 
 // Configuración de la base de datos
 const dbConfig = {
@@ -11,10 +9,10 @@ const dbConfig = {
   database: process.env.DB_NAME || 'videojuegos_xbox360',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
 };
 
-// Pool de conexiones
+// Crear pool
 const pool = mysql.createPool(dbConfig);
 
 // Verificar conexión
