@@ -36,6 +36,11 @@ const pool = mysql.createPool(dbConfig);
   }
 })();
 
+
+// Aquí debes registrar las rutas de autenticación
+const authRoutes = require('./src/routes/auth.routes')(pool);
+app.use('/api/auth', authRoutes);
+
 // ====== RUTAS API ======
 
 // GET - Obtener todos los videojuegos
